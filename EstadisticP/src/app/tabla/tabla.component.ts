@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { DataValue } from '../interfaces/dataValue';
 import { Frequency } from '../interfaces/frecuency';
 import * as Highcharts from 'highcharts';
+import * as arraystat from 'arraystat';
 
 @Component({
   selector: 'app-tabla',
@@ -16,31 +17,15 @@ export class TablaComponent implements OnInit {
   moda = 0;
   media = 0;
   tableValues: Frequency[] = [];
+  tableIntervalValues: Frequency[] = [];
   valuesAtX: number[] = [];
   valuesAtY: number[] = [];
   showDotPlot = false;
 
-  // highcharts = Highcharts;
-  // chartOptions = {
-  //   title : {
-  //       text: 'Gráfica de Puntos'
-  //   },
-  //   yAxis: {
-  //     title: {
-  //        text: 'Valores'
-  //     },
-  //     categories: this.valuesAtY
-  //   },
-  //   xAxis: {
-  //     categories: this.valuesAtX
-  //   },
-  //   series : [{
-  //       type: 'scatter',
-  //       zoomType: 'xy',
-  //       name: 'Valores',
-  //       data: this.graphicValues
-  //   }]
-  // };
+  isFrequencyTable = true;
+  isIntervalsTable = false;
+  isDotPlot = false;
+  isBoxPlot = false;
 
   options = {
     chart: {
@@ -70,7 +55,6 @@ export class TablaComponent implements OnInit {
         axisLabelDistance: -5,
       },
       zoom: {
-        //NOTE: All attributes below are optional
         enabled: false,
         scaleExtent: [1, 10],
         useFixedDomain: false,
@@ -81,11 +65,57 @@ export class TablaComponent implements OnInit {
       },
     },
   };
-  data;
+  data: any;
+
+  optionsCaja = {
+    chart: {
+        type: 'boxPlotChart',
+        height: 450,
+        margin : {
+            top: 20,
+            right: 20,
+            bottom: 60,
+            left: 40
+        },
+        color: ['darkblue', 'darkorange', 'green', 'darkred', 'darkviolet'],
+        x(d){return d.label; },
+        maxBoxWidth: 75,
+        yDomain: [0, 500]
+    }
+  };
+  dataCaja: {label: string, values: 
+    { Q1: number, Q2: number, Q3: number, whisker_low: number, whisker_high: number, outliers: number[] }}[] = [];
 
   constructor() {}
 
   ngOnInit(): void {}
+
+  changeTab(tab: string) {
+    if (tab === 'freq') {
+      this.isFrequencyTable = true;
+      this.isIntervalsTable = false;
+      this.isDotPlot = false;
+      this.isBoxPlot = false;
+    }
+    if (tab === 'interv') {
+      this.isFrequencyTable = false;
+      this.isIntervalsTable = true;
+      this.isDotPlot = false;
+      this.isBoxPlot = false;
+    }
+    if (tab === 'dot') {
+      this.isFrequencyTable = false;
+      this.isIntervalsTable = false;
+      this.isDotPlot = true;
+      this.isBoxPlot = false;
+    }
+    if (tab === 'box') {
+      this.isFrequencyTable = false;
+      this.isIntervalsTable = false;
+      this.isDotPlot = false;
+      this.isBoxPlot = true;
+    }
+  }
 
   insertValue() {
     this.values.push({ value: this.value });
@@ -127,6 +157,76 @@ export class TablaComponent implements OnInit {
     this.calcularModa(this.graphicValues);
     this.data = this.generateData(1);
     this.showDotPlot = true;
+    this.handleIntervals();
+  }
+
+  handleIntervals() {
+    let total = 0;
+    let min = 0;
+    let max = 0;
+    this.tableValues.forEach(tabValue => {
+      total += tabValue.f;
+      min = Math.min(...this.graphicValues);
+      max = Math.max(...this.graphicValues);
+    });
+    let intervalsTotal = (1 + 3.3 * (Math.log10(total)));
+
+    const toEvaluateInterval = intervalsTotal.toFixed(1);
+    if (+toEvaluateInterval.split('.')[1] >= 5) {
+      intervalsTotal = Math.ceil(intervalsTotal);
+    } else if (+toEvaluateInterval.split('.')[1] < 5) {
+      intervalsTotal = Math.floor(intervalsTotal);
+    }
+    const maxMinusMin = max - min;
+    const amplitud = maxMinusMin / intervalsTotal;
+    this.createIntervalsTable(amplitud, intervalsTotal);
+    this.tableIntervalValues.forEach((data, index) => {
+      data.fr = data.f / total;
+      data.fPercent = data.fr * 100;
+      if (index === 0) {
+        data.fa = data.fPercent;
+      } else {
+        data.fa = data.fPercent + this.tableIntervalValues[index - 1].fa;
+      }
+    });
+  }
+
+  createIntervalsTable(amplitud, intervalsTotal) {
+    let actualMaxVal = 0;
+    let actualMinVal = 0;
+    for (let index = 0; index < (this.graphicValues.length); index++) {
+      const element = this.graphicValues[index];
+      if (index === 0) {
+        actualMinVal = element;
+        actualMaxVal = element + amplitud;
+        this.tableIntervalValues.push({valueIntervalMin: actualMinVal, valueIntervalMax: actualMaxVal, f: 0});
+      }
+      if (index !== 0 && element >= actualMaxVal) {
+        actualMinVal += amplitud;
+        actualMaxVal += amplitud;
+        this.tableIntervalValues.push({valueIntervalMin: actualMinVal, valueIntervalMax: actualMaxVal, f: 0});
+      }
+
+      if (element >= actualMinVal && element <= actualMaxVal) {
+        const actIndex = this.tableIntervalValues.findIndex(interValue =>
+          interValue.valueIntervalMin <= element && interValue.valueIntervalMax >= element);
+        this.tableIntervalValues[actIndex].f += 1;
+        console.log('frecuencia ' + this.tableIntervalValues[actIndex].f + ' valor' + element);
+      }
+    }
+    this.tableIntervalValues.pop();
+
+    const valoresParaCaja = arraystat(this.graphicValues);
+    this.optionsCaja.chart.yDomain = [valoresParaCaja.min - 10, valoresParaCaja.max + 10];
+    this.dataCaja.push({label: 'Datos', values: {
+      Q1: valoresParaCaja.q1,
+      Q2: valoresParaCaja.median,
+      Q3: valoresParaCaja.q3,
+      whisker_high: valoresParaCaja.max,
+      whisker_low: valoresParaCaja.min,
+      outliers: []
+    }});
+    console.log(this.tableIntervalValues);
   }
 
   handleXAndYValues() {
@@ -208,15 +308,15 @@ export class TablaComponent implements OnInit {
   calcularModa(numeros: number[]) {
     const modes = [];
     const count = [];
-    let i;
-    let number;
+    let i: any;
+    let numero: number;
     let maxIndex = 0;
 
     for (i = 0; i < numeros.length; i += 1) {
-        number = numeros[i];
-        count[number] = (count[number] || 0) + 1;
-        if (count[number] > maxIndex) {
-            maxIndex = count[number];
+        numero = numeros[i];
+        count[numero] = (count[numero] || 0) + 1;
+        if (count[numero] > maxIndex) {
+            maxIndex = count[numero];
         }
     }
 

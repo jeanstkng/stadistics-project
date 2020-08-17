@@ -6,6 +6,8 @@ import { AppComponent } from './app.component';
 import { TablaComponent } from './tabla/tabla.component';
 import { HighchartsChartModule } from 'highcharts-angular';
 import { NvD3Module } from 'ng2-nvd3';
+import { environment } from 'src/environments/environment';
+import { AngularFireModule } from '@angular/fire';
 
 @NgModule({
   declarations: [
@@ -15,9 +17,10 @@ import { NvD3Module } from 'ng2-nvd3';
   imports: [
     BrowserModule,
     AppRoutingModule,
+    AngularFireModule.initializeApp(environment.firebase),
     FormsModule,
     HighchartsChartModule,
-    NvD3Module
+    NvD3Module,
   ],
   providers: [],
   bootstrap: [AppComponent]

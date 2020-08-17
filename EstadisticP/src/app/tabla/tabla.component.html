@@ -4,7 +4,13 @@
   <button class="btn btn-primary col-md-1 mx-2" (click)="insertValue()">Añadir</button>
 </div>
 <button class="btn btn-secondary row mx-3 mt-4" (click)="handleFrequencies()">Calcular</button>
-<div class="row mx-3 my-4">
+<ul class="nav nav-tabs row mx-3 my-2">
+  <button class="btn btn-light mr-2" (click)="changeTab('freq')"  href="#">Tabla de Frecuencia</button>
+  <button class="btn btn-light mx-2" (click)="changeTab('interv')" href="#">Tabla de Intervalos</button>
+  <button class="btn btn-light mx-2" (click)="changeTab('dot')" href="#">Gráfico de Puntos</button>
+  <button class="btn btn-light mx-2" (click)="changeTab('box')" href="#">Gráfico de Caja y Bigotes</button>
+</ul>
+<div *ngIf="isFrequencyTable" class="row mx-3 my-4">
   <h4 class="mx-3">Tabla de Frecuencia</h4>
   <table class="table table-striped">
     <thead>
@@ -27,12 +33,51 @@
     </tbody>
   </table>
 </div>
+
+<div *ngIf="isIntervalsTable" class="row mx-3 my-4">
+  <h4 class="mx-3">Tabla de Intervalos</h4>
+  <table class="table table-striped">
+    <thead>
+    <tr>
+      <th scope="col">Clase</th>
+      <th scope="col">Intervalo</th>
+      <th scope="col">f</th>
+      <th scope="col">fr</th>
+      <th scope="col">f%</th>
+      <th scope="col">fa</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let values of tableIntervalValues; index as i">
+      <th scope="row">{{ i + 1 }}</th>
+      <th scope="row">{{ '[' + formatValue(values.valueIntervalMin) + ', ' + formatValue(values.valueIntervalMax) + ')' }}</th>
+      <td>{{ formatValue(values.f) }}</td>
+      <td>{{ formatValue(values.fr) }}</td>
+      <td>{{ formatValue(values.fPercent) }}</td>
+      <td>{{ formatValue(values.fa) }}</td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+
 <div class="row my-2 mx-3">
   <p class="col-md-2">Mediana: {{formatValue(median)}}</p>
   <p class="col-md-2">Moda: {{formatValue(moda)}}</p>
   <p class="col-md-2">Media: {{formatValue(media)}}</p>
 </div>
 
-<div class="row mx-3 my-2">
+<div class="row my-2 mx-3" *ngIf="dataCaja.length > 0">
+  <p class="col-md-2">Mínimo: {{formatValue(dataCaja[0].values.whisker_low)}}</p>
+  <p class="col-md-2">Q1: {{formatValue(dataCaja[0].values.Q1)}}</p>
+  <p class="col-md-2">Q2: {{formatValue(dataCaja[0].values.Q2)}}</p>
+  <p class="col-md-2">Q3: {{formatValue(dataCaja[0].values.Q3)}}</p>
+  <p class="col-md-2">Máximo: {{formatValue(dataCaja[0].values.whisker_high)}}</p>
+</div>
+
+<div *ngIf="isDotPlot && showDotPlot" class="row mx-3 my-2">
   <nvd3 [options]="options" [data]="data"></nvd3>
+</div>
+
+<div *ngIf="isBoxPlot">
+  <nvd3 [options]="optionsCaja" [data]="dataCaja"></nvd3>
 </div>
