@@ -1,0 +1,11 @@
+{
+  "targets": {
+    "jeanstadistics": {
+      "hosting": {
+        "EstadisticP": [
+          "jeanstadistics"
+        ]
+      }
+    }
+  }
+}
