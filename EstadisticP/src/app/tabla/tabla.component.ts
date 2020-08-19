@@ -175,6 +175,9 @@ export class TablaComponent implements OnInit {
   handleFrequencies() {
     let totalValues = 0;
     this.tableValues = [];
+    this.graphicValues.sort((a, b) => {
+      return a - b;
+    });
     this.graphicValues.forEach((data) => {
       if (
         this.tableValues.find((tableData) => tableData.value === data)
