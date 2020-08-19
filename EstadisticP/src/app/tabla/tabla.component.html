@@ -4,11 +4,20 @@
   <button class="btn btn-primary col-md-1 mx-2" (click)="insertValue()">Añadir</button>
 </div>
 <button class="btn btn-secondary row mx-3 mt-4" (click)="handleFrequencies()">Calcular</button>
+<button class="btn btn-primary row mx-3 mt-4" (click)="saveNumbers(this.graphicValues)">Guardar</button>
+<button class="btn btn-warning row mx-3 mt-4" (click)="reiniciarTodo()">Reiniciar</button>
+
+<div class="row mx-3 mt-3">
+  <p>Datos: <span *ngFor="let numb of graphicValues">{{ numb }}, </span></p>
+</div>
+
 <ul class="nav nav-tabs row mx-3 my-2">
   <button class="btn btn-light mr-2" (click)="changeTab('freq')"  href="#">Tabla de Frecuencia</button>
   <button class="btn btn-light mx-2" (click)="changeTab('interv')" href="#">Tabla de Intervalos</button>
   <button class="btn btn-light mx-2" (click)="changeTab('dot')" href="#">Gráfico de Puntos</button>
   <button class="btn btn-light mx-2" (click)="changeTab('box')" href="#">Gráfico de Caja y Bigotes</button>
+  <button class="btn btn-light mx-2" (click)="changeTab('tal'); handleTallosYHojas(this.graphicValues);" href="#">Diagrama de Tallos y Hojas</button>
+  <button class="btn btn-light mx-2" (click)="changeTab('estud'); getNumbers()" href="#">Estudios Almacenados</button>
 </ul>
 <div *ngIf="isFrequencyTable" class="row mx-3 my-4">
   <h4 class="mx-3">Tabla de Frecuencia</h4>
@@ -81,3 +90,15 @@
 <div *ngIf="isBoxPlot">
   <nvd3 [options]="optionsCaja" [data]="dataCaja"></nvd3>
 </div>
+
+<div class="mx-3" *ngIf="isEstudios">
+  <div *ngFor="let item of numbersExistents">
+    <div class="row mx-3">
+      <p>Datos: <span *ngFor="let numero of item.payload.doc.data().numbers">{{ numero }}, </span></p>
+      <button class="btn btn-light mx-2 mb-2" (click)="graphicValues = item.payload.doc.data().numbers" >Revisar</button>
+    </div>
+    
+  </div>
+</div>
+
+<div [style.hidden]="!isTallos" class="mx-3" id="destino"></div>
