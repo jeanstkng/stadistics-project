@@ -15,6 +15,7 @@ export class TablaComponent implements OnInit {
   median = 0;
   moda = 0;
   media = 0;
+  rango = 0;
   tableValues: Frequency[] = [];
   tableIntervalValues: Frequency[] = [];
   valuesAtX: number[] = [];
@@ -229,6 +230,7 @@ export class TablaComponent implements OnInit {
       intervalsTotal = Math.floor(intervalsTotal);
     }
     const maxMinusMin = max - min;
+    this.rango = maxMinusMin;
     const amplitud = maxMinusMin / intervalsTotal;
     this.createIntervalsTable(amplitud, intervalsTotal);
     this.tableIntervalValues.forEach((data, index) => {
